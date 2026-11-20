@@ -184,3 +184,14 @@ const recipes=[
  const v=[0,0,0,0];for(const [k,g] of Object.entries(items))v.forEach((_,i)=>v[i]+=foods[k][i+2]*g/100);
  return {id,name,cat,time,url:'https://1000.menu/cooking/'+url,photo:`assets/${id}.webp`,base,side,items,b:Math.round(v[0]),f:Math.round(v[1]),c:Math.round(v[2]),fib:Math.round(v[3]),kcal:Math.round(v[0]*4+v[1]*9+v[2]*4)};
 });
+
+// The two browsing sections are disjoint; shopping and cooking use the full catalog.
+const breakfastGroups = {
+  'Блины и оладьи': ['oat', 'm34584', 'm28853', 'm41421', 'm26807', 'm28000', 'm28023', 'm27133'],
+  'Каши': ['m62734', 'm10730', 'm36574', 'm23581', 'm36315', 'm29354', 'm17499', 'm13210', 'm23693'],
+  'Вафли и выпечка': ['m48905', 'm24062', 'm39503', 'm24997', 'm9326', 'm38602', 'm13803', 'm29273'],
+  'Вареники и котлеты': ['m20457', 'm84382', 'm27901', 'm39440', 'm9722']
+};
+
+const breakfastIds = new Set(Object.values(breakfastGroups).flat());
+const generalRecipes = recipes.filter(r => !breakfastIds.has(r.id));
