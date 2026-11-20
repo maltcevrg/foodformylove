@@ -23,21 +23,40 @@
     'Твои кружки с утра это самое лучшее начало дня'
   ];
   const key = 'leraWelcomeNotes';
-  let seen = [];
-  try {
-    const stored = JSON.parse(localStorage.getItem(key));
-    if (Array.isArray(stored)) seen = [...new Set(stored.filter(p => phrases.includes(p)))];
-  } catch { /* The note also works when browser storage is disabled. */ }
-  const last = seen.at(-1);
-  if (seen.length === phrases.length) seen = [];
-  const choices = phrases.filter(p => !seen.includes(p) && p !== last);
-  const note = choices[Math.floor(Math.random() * choices.length)];
-  try { localStorage.setItem(key, JSON.stringify([...seen, note])); } catch {}
+  const windowSize = 20;
+  const known = list => Array.isArray(list) ? list.filter(p => phrases.includes(p)) : [];
+
+  function showNote() {
+    let stored;
+    try { stored = JSON.parse(localStorage.getItem(key)); } catch {}
+    // Earlier versions stored just the current cycle in chronological order.
+    const legacy = Array.isArray(stored);
+    const recent = known(legacy ? stored : stored?.recent).slice(1 - windowSize);
+    let cycle = [...new Set(known(legacy ? stored : stored?.cycle))];
+    if (cycle.length === phrases.length) cycle = [];
+
+    // Keep the rolling window even when the full-catalog cycle restarts.
+    const eligible = phrases.filter(p => !recent.includes(p));
+    let choices = eligible.filter(p => !cycle.includes(p));
+    if (!choices.length) { // Recover from inconsistent saved cycle data.
+      cycle = [];
+      choices = eligible;
+    }
+    const note = choices[Math.floor(Math.random() * choices.length)];
+    document.querySelector('#compliment').textContent = note;
+    dialog.showModal();
+    try {
+      localStorage.setItem(key, JSON.stringify({
+        recent: [...recent, note].slice(1 - windowSize), cycle: [...cycle, note]
+      }));
+    } catch { /* A note can still be shown without persistent storage. */ }
+  }
 
   const dialog = document.querySelector('#welcome');
-  document.querySelector('#compliment').textContent = note;
   dialog.addEventListener('click', event => {
     if (event.target === dialog) dialog.close();
   });
-  dialog.showModal();
+  // Serialize visits from simultaneous tabs where Web Locks are supported.
+  if (navigator.locks) navigator.locks.request(key, showNote);
+  else showNote();
 })();
