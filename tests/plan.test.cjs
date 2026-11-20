@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const root = path.join(__dirname,'..');
-const {plan,recipes,foods} = vm.runInNewContext(['data.js','plan.js'].map(f=>fs.readFileSync(path.join(root,f),'utf8')).join('\n')+';({plan,recipes,foods})');
+const {plan,recipes,foods,breakfastGroups,generalRecipes} = vm.runInNewContext(['data.js','plan.js'].map(f=>fs.readFileSync(path.join(root,f),'utf8')).join('\n')+';({plan,recipes,foods,breakfastGroups,generalRecipes})');
 
 test('каталог: 120 уникальных первоисточников, состав, порции и изображения',()=>{
   assert.equal(recipes.length,120);
@@ -32,7 +32,8 @@ test('недели не пересекаются до исчерпания ка�
     for(const id of state.ids){
       assert.ok(!visited.has(id),'повтор до исчерпания каталога: '+id);
       visited.add(id);
-      if(visited.size===recipes.length) visited.clear();
+      assert.ok(generalRecipes.some(r=>r.id===id));
+      if(visited.size===generalRecipes.length) visited.clear();
     }
     const next=plan.nextWeek(state.ids,state.seen);
     assert.ok(next.ids.every(id=>!state.ids.includes(id)));
@@ -47,9 +48,9 @@ test('миграция: удалённые блюда не возвращают�
   assert.deepEqual([...resumed.checked],['bulgur']);
 });
 test('тыква исчезает из сохранённой недели и покупок, овсяноблины остаются',()=>{
-  const week=plan.restore().ids.map(id=>id==='oat'?'m66907':id==='m29488'?'m32624':id);
+  const week=plan.restore().ids.map(id=>id==='m69215'?'m66907':id==='m29488'?'m32624':id);
   const s=plan.restore({ids:week,seen:week,done:['m66907','bulgur'],portion:{bulgur:2,m66907:2},checked:['pumpkin','milk']});
-  assert.equal(s.ids.length,21);assert.ok(s.ids.includes('oat') && s.ids.includes('m29488'));
+  assert.equal(s.ids.length,21);assert.ok(!s.ids.includes('oat') && s.ids.includes('m29488'));
   assert.deepEqual([...s.checked],[]);assert.deepEqual([...s.done],['bulgur']);assert.equal(s.portion.bulgur,2);
   assert.ok(recipes.filter(r=>/овсяноблин/i.test(r.name)).length>=2);
 });
@@ -69,4 +70,20 @@ test('покупки пусты до выбора, выбранные порци
   assert.deepEqual({...selected.portion},{[r.id]:2});
   const next=plan.restore({...selected,...plan.nextWeek(s.ids,s.seen)});
   assert.deepEqual({...next.portion},{[r.id]:2});
+});
+
+test('завтраки ссылаются на существующие рецепты без дубликатов, в том числе на оба овсяноблина',()=>{
+  const ids=Object.values(breakfastGroups).flat();
+  assert.equal(ids.length,30);assert.equal(new Set(ids).size,ids.length);
+  assert.ok(ids.every(id=>recipes.some(r=>r.id===id)));
+  assert.ok(ids.includes('oat') && ids.includes('m34584'));
+});
+
+test('старая неделя очищается от завтраков без потери покупок и отметок',()=>{
+  const ids=recipes.slice(0,21).map(r=>r.id), breakfast=new Set(Object.values(breakfastGroups).flat());
+  const saved=plan.restore({ids,seen:ids,done:['oat'],portion:{oat:3}});
+  assert.equal(generalRecipes.length,90);assert.equal(new Set(saved.ids).size,21);
+  assert.ok([...saved.ids,...saved.seen].every(id=>!breakfast.has(id)));
+  assert.ok(ids.every(id=>breakfast.has(id)||saved.ids.includes(id)));
+  assert.equal(saved.portion.oat,3);assert.ok(saved.done.includes('oat'));
 });

@@ -1,10 +1,9 @@
 // A week is a set of choices, never a breakfast/lunch/dinner schedule.
 const plan = (() => {
   const size = 21;
-  const ids = recipes.map(r => r.id);
-  const known = new Set(ids);
+  const ids = generalRecipes.map(r => r.id);
   const byId = new Map(recipes.map(r => [r.id, r]));
-  const valid = values => [...new Set(Array.isArray(values) ? values.filter(id => known.has(id)) : [])];
+  const valid = values => [...new Set(Array.isArray(values) ? values.filter(id => byId.has(id)) : [])];
   function shuffled(items) {
     const a = [...items];
     for (let i = a.length - 1; i > 0; i--) {
@@ -38,7 +37,7 @@ const plan = (() => {
     return shuffled(out);
   }
   function nextWeek(current, seen) {
-    const history = valid(seen);
+    const history = valid(seen).filter(id => !breakfastIds.has(id));
     const next = draw(ids.filter(id => !history.includes(id) && !current.includes(id)), size);
     if (next.length === size) return { ids: next, seen: [...history, ...next] };
     // Only restart after exhausting the deck. Avoid the previous week even
@@ -49,23 +48,32 @@ const plan = (() => {
   function restore(saved, legacy) {
     // Replace retired dishes in place without resetting the rest of a saved week.
     const replacements = {"m66907": "oat", "m32624": "m29488", "m30075": "m37963", "m27093": "m34584", "m20521": "m29354", "m36077": "m28853", "soup": "m42911", "m28992": "m29488", "m14506": "m39174", "grainSoup": "m7273", "m45359": "m12417", "m68629": "m27901", "m27840": "m39503", "m38765": "m9326", "m13529": "m16966", "m54107": "m26807", "m43822": "m68516", "m39960": "m42689", "m15490": "m11970", "m13922": "m24997", "m58781": "m13803", "m42642": "m672", "m27067": "m39318"};
-    const current = valid(Array.isArray(saved?.ids) ? saved.ids.map(id => replacements[id] ?? id) : []);
-    const resume = current.length === size;
-    const week = resume ? current : ids.slice(0, size);
+    const resume = Array.isArray(saved?.ids) && saved.ids.length === size;
+    const migrated = resume ? saved.ids.map(id => replacements[id] ?? id) : [];
+    const week = resume ? valid(migrated).filter(id => !breakfastIds.has(id)) : ids.slice(0,size);
+    // A week may straddle two cycles. Only add currently displayed replacements
+    // to a saved history; don't reinsert last cycle's tail on every reload.
+    let seen = resume && Array.isArray(saved.seen)
+      ? valid([...saved.seen, ...saved.ids.map(id=>replacements[id])]).filter(id=>!breakfastIds.has(id))
+      : [...week];
+    if (week.length < size) {
+      const fill = draw(ids.filter(id => !seen.includes(id) && !week.includes(id)), size-week.length);
+      week.push(...fill); seen.push(...fill);
+      if (week.length < size) {
+        seen = draw(ids.filter(id => !week.includes(id)), size-week.length);
+        week.push(...seen);
+      }
+    }
     // The shopping list is opt-in and independent of the rotating suggestions.
     // Earlier saves only stored quantities that the user explicitly changed.
     const portion = Object.fromEntries(Object.entries(saved?.portion ?? {}).filter(
-      ([id,n]) => known.has(id) && Number.isInteger(n) && n > 0 && n <= size
+      ([id,n]) => byId.has(id) && Number.isInteger(n) && n > 0 && n <= size
     ));
     const ingredients = new Set(Object.keys(portion).flatMap(id => Object.keys(byId.get(id).items)));
 
     return {
       ids: week,
-      // A week can straddle two 120-dish cycles. In that case only its tail
-      // belongs to the current history; do not re-add the previous cycle.
-      seen: resume && Array.isArray(saved.seen)
-        ? valid([...saved.seen, ...saved.ids.filter(id => replacements[id]).map(id => replacements[id])])
-        : [...week],
+      seen,
       done: valid(saved?.done ?? legacy?.done),
       portion,
       checked: Array.isArray(saved?.checked) ? saved.checked.filter(k => ingredients.has(k)) : []
