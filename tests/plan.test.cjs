@@ -4,10 +4,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const root = path.join(__dirname,'..');
-const {plan,recipes,foods,breakfastGroups,generalRecipes} = vm.runInNewContext(['data.js','plan.js'].map(f=>fs.readFileSync(path.join(root,f),'utf8')).join('\n')+';({plan,recipes,foods,breakfastGroups,generalRecipes})');
+const {plan,recipes,foods,breakfastGroups,generalRecipes,airfryerRecipes} = vm.runInNewContext(['data.js','plan.js'].map(f=>fs.readFileSync(path.join(root,f),'utf8')).join('\n')+';({plan,recipes,foods,breakfastGroups,generalRecipes,airfryerRecipes})');
 
-test('каталог: 120 уникальных первоисточников, состав, порции и изображения',()=>{
-  assert.equal(recipes.length,120);
+test('каталог: 169 уникальных первоисточников, состав, порции и изображения',()=>{
+  assert.equal(recipes.length,169);
   for(const key of ['id','url','name']) assert.equal(new Set(recipes.map(r=>r[key])).size,recipes.length);
   for(const r of recipes){
     assert.match(r.url,/^https:\/\/1000\.menu\/cooking\/\d+-/);
@@ -70,6 +70,24 @@ test('покупки пусты до выбора, выбранные порци
   assert.deepEqual({...selected.portion},{[r.id]:2});
   const next=plan.restore({...selected,...plan.nextWeek(s.ids,s.seen)});
   assert.deepEqual({...next.portion},{[r.id]:2});
+});
+
+test('аэрогриль: 90 рецептов, «и там, и там» отмечены отдельным значком',()=>{
+  assert.equal(airfryerRecipes.length,90);
+  assert.equal(new Set(airfryerRecipes.map(r=>r.id)).size,90);
+  const dual=airfryerRecipes.filter(r=>r.both);
+  const exclusive=airfryerRecipes.filter(r=>!r.both);
+  assert.equal(dual.length,70);
+  assert.equal(exclusive.length,20);
+  // «И там, и там»: 29 адаптированных из духовки интернет-рецептов и 41 блюдо основной коллекции
+  const mirrored=airfryerRecipes.filter(r=>!/^a/.test(r.id));
+  assert.equal(mirrored.length,41);
+  assert.ok(mirrored.every(r=>r.both && generalRecipes.includes(r)));
+  const breakfastIds=new Set(Object.values(breakfastGroups).flat());
+  assert.ok(airfryerRecipes.every(r=>!breakfastIds.has(r.id)));
+  // неделя в общей коллекции не меняется, новые рецепты в ротацию не попадают
+  assert.equal(generalRecipes.length,90);
+  assert.ok(airfryerRecipes.filter(r=>/^a/.test(r.id)).every(r=>!generalRecipes.includes(r)));
 });
 
 test('завтраки ссылаются на существующие рецепты без дубликатов, в том числе на оба овсяноблина',()=>{

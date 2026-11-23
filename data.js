@@ -57,7 +57,18 @@ Object.assign(foods, {
  brined:["Брынза",0,18.0,20.0,1.0,0.0],
  couscous:["Кускус",1,13.0,0.6,72.0,5.0]
 });
+Object.assign(foods, {
+ cod:["Треска",0,17.8,0.7,0,0], salmon:["Лосось",0,20.0,8.0,0,0], salmonPink:["Горбуша",0,20.5,6.5,0,0],
+ pikeperch:["Судак",0,18.4,1.1,0,0], trout:["Форель",0,19.8,6.1,0,0], mackerel:["Скумбрия",0,18.0,9.0,0,0],
+ rice:["Рис белый",1,7.0,0.6,78.0,0.4], buckwheat:["Гречка",1,12.6,3.3,62.0,10.0],
+ mozzarella:["Моцарелла",0,18.0,20.0,2.0,0], wings:["Куриные крылышки",0,17.5,10.0,0,0]
+});
 // Адаптированные порции. Шаги приготовления — по ссылке на 1000.menu.
+const toRecipe=([id,name,cat,time,url,base,side])=>{
+ const items={...base};for(const [k,g] of Object.entries(side))items[k]=(items[k]||0)+g;
+ const v=[0,0,0,0];for(const [k,g] of Object.entries(items))v.forEach((_,i)=>v[i]+=foods[k][i+2]*g/100);
+ return {id,name,cat,time,url:'https://1000.menu/cooking/'+url,photo:`assets/${id}.webp`,base,side,items,b:Math.round(v[0]),f:Math.round(v[1]),c:Math.round(v[2]),fib:Math.round(v[3]),kcal:Math.round(v[0]*4+v[1]*9+v[2]*4)};
+};
 const recipes=[
 ["oat","Овсяноблин с бананом","Без мяса",20,"28998-ovsyanoblin-s-bananami-na-zavtrak",{"oats":55,"milk":60,"egg":100,"banana":120,"oil":2},{"kefir":110}],
 ["m69215","Домашняя шаурма с курицей","С птицей",60,"69215-pp-shaurma-s-kuricei-v-lavashe",{"wrap":90,"chicken":70,"lettuce":20,"cucumber":60,"tomato":65,"cream":25,"sauce":10,"mustard":3},{"apple":180,"cheese":25}],
@@ -179,11 +190,7 @@ const recipes=[
 ["m16849","Курица в сливочном соусе со шпинатом","С птицей",80,"16849-kurica-so-shpinatom-i-syrom",{"thigh":86,"cream10":45,"spinach":80,"oil":5,"onion":35,"garlic":2},{"pasta":65,"apple":155}],
 ["m14700","Вареники с картошкой и квашеной капустой","Без мяса",105,"14700-vareniki-s-kisloi-kapustoi-i-myatym-kartofelem",{"egg":10,"sugar":2,"flour":60,"onion":30,"sauerkraut":70,"potato":80,"oil":6,"cream":20},{"yogurt":180,"apple":100}],
 ["m38602","Лепёшки с сыром и зеленью","Без мяса",75,"38602-lepeshki-s-zelenu-na-kefire-na-skovorode",{"kefir":60,"flour":70,"soda":1,"sugar":2,"cheese":28,"herbs":10,"butter":5},{"yogurt":105,"apple":170}]
-].map(([id,name,cat,time,url,base,side])=>{
- const items={...base};for(const [k,g] of Object.entries(side))items[k]=(items[k]||0)+g;
- const v=[0,0,0,0];for(const [k,g] of Object.entries(items))v.forEach((_,i)=>v[i]+=foods[k][i+2]*g/100);
- return {id,name,cat,time,url:'https://1000.menu/cooking/'+url,photo:`assets/${id}.webp`,base,side,items,b:Math.round(v[0]),f:Math.round(v[1]),c:Math.round(v[2]),fib:Math.round(v[3]),kcal:Math.round(v[0]*4+v[1]*9+v[2]*4)};
-});
+].map(toRecipe);
 
 // The two browsing sections are disjoint; shopping and cooking use the full catalog.
 const breakfastGroups = {
@@ -195,3 +202,68 @@ const breakfastGroups = {
 
 const breakfastIds = new Set(Object.values(breakfastGroups).flat());
 const generalRecipes = recipes.filter(r => !breakfastIds.has(r.id));
+
+// Отдельная вкладка «Аэрогриль». Новые рецепты с 1000.menu: 20 созданы специально
+// для аэрогриля, 29 адаптированы из духовки. Порции адаптированы под рацион, шаги — по ссылке.
+const airfryerInternet=[
+
+// exclusive airfryer
+['a103674','Картошка в аэрогриле','Без мяса',35,'103674-kartoshka-v-aerogrile',{potato:260,oil:9},{yogurt:170,bread:55,cheese:15}],
+['a100172','Курица в аэрогриле целиком','С птицей',120,'100172-kurica-v-aerogrile-celikom',{chicken:48,thigh:72,garlic:4,herbs:3,oil:5},{barley:72,apple:125,butter:3}],
+['a103612','Картошка фри в аэрогриле','Без мяса',30,'103612-kartoshka-fri-v-aerogrile',{potato:245,oil:9},{yogurt:160,cheese:15,bread:40}],
+['a36604','Овощи в аэрогриле','Без мяса',40,'36604-ovoschi-v-aerogrile',{zucchini:120,eggplant:90,carrot:45,onion:35,tomato:80,oil:8},{lentils:60,bread:40,yogurt:110}],
+['a28970','Рыба в аэрогриле','С рыбой',40,'28970-ryba-v-aerogrile',{trout:115,oil:6,lemon:10},{barley:70,apple:155,butter:2}],
+['a100705','Куриная грудка в аэрогриле','С птицей',155,'100705-kurinaya-grudka-v-aerogrile',{chicken:100,yogurt:25,lemon:8,oil:4},{potato:330,apple:155,butter:10}],
+['a18044','Куриные крылышки в аэрогриле','С птицей',90,'18044-kurinye-krylyshki-v-aerogrile',{wings:105,paste:10,honey:5,soy:8,garlic:4,cream:10},{potato:250,apple:150,butter:8}],
+['a103617','Шампиньоны в аэрогриле','Без мяса',25,'103617-griby-shampinony-v-aerogrile',{mushroom:190,oil:7,lemon:8,garlic:2},{lentils:72,bread:48,cheese:12}],
+['a105546','Наггетсы в аэрогриле','С птицей',50,'105546-naggetsy-v-aerogrile',{chicken:74,crumb:22,egg:12,flour:10,milk:8,oil:6},{potato:220,apple:140,butter:6}],
+['a6528','Баклажаны с помидорами и сыром','Без мяса',40,'6528-baklazhanj-zapechennje',{eggplant:200,tomato:80,cheese:45,garlic:3,herbs:5,oil:10,cream:10},{yogurt:150,bread:45}],
+['a101833','Куриные голени в аэрогриле','С птицей',105,'101833-kurinye-goleni-v-aerogrile',{thigh:115,lemon:10,oil:7},{potato:270,apple:140,butter:6}],
+['a104024','Куриные крылья с хрустящей корочкой','С птицей',60,'104024-krylyshki-v-aerogrile-s-xrustyaschei-korochkoi',{wings:105,soy:10,oil:6},{potato:250,apple:135,butter:6}],
+['a104653','Баклажаны с помидорами и моцареллой','Без мяса',30,'104653-zapechennye-baklajany-v-aerogrile',{eggplant:210,tomato:80,mozzarella:65,oil:7},{yogurt:165,bread:48}],
+['a99969','Куриные бёдра с горчицей и мёдом','С птицей',120,'99969-bedra-kurinye-v-aerogrile',{thigh:95,garlic:3,honey:6,oil:8,mustard:6,soy:8},{potato:275,apple:140,butter:7}],
+['a104683','Картофель по-деревенски в аэрогриле','Без мяса',40,'104683-kartofel-po-derevenski-v-aerogrile',{potato:260,oil:8,garlic:3},{yogurt:155,bread:50,cheese:15}],
+['a100032','Брокколи в аэрогриле','Без мяса',40,'100032-brokkoli-v-aerogrile',{broccoli:180,oil:8,lemon:8},{lentils:68,bread:48,cheese:18}],
+['a104799','Рис в аэрогриле','Без мяса',30,'104799-ris-v-aerogrile',{rice:69,butter:6},{lentils:58,cheese:17,bread:22}],
+['a101142','Скумбрия в аэрогриле','С рыбой',80,'101142-skumbriya-v-aerogrile',{mackerel:108,oil:5},{barley:72,apple:155,butter:4}],
+['a104611','Курица с картошкой в аэрогриле','С птицей',70,'104611-kurica-s-kartoshkoi-v-aerogrile',{thigh:88,potato:230,onion:35,garlic:2,cream:25,oil:8},{apple:100,bread:30}],
+['a104070','Куриные котлеты в аэрогриле','С птицей',40,'104070-kurinye-kotlety-v-aerogrile',{chicken:75,bread:20,onion:20,oil:4},{potato:310,apple:165,butter:4}],
+// oven-adapted from the internet
+['a29384','Треска в фольге','С рыбой',30,'29384-treska-zapechennaya-v-duxovke-v-folge',{cod:115,butter:8,lemon:12,onion:35},{barley:77,apple:155,butter:2,bread:20}],
+['a17992','Лосось в фольге','С рыбой',35,'17992-losos-v-duxovke-v-folge-zapechennyi',{salmon:110,butter:8,lemon:10,honey:4},{barley:70,apple:140,butter:2}],
+['a17866','Горбуша в сливках','С рыбой',35,'17866-gorbusha-v-slivkax-zapechennaya-v-duxovke',{salmonPink:118,cream10:60,chili:1},{barley:65,apple:150,butter:2}],
+['a18390','Судак в фольге','С рыбой',35,'18390-file-sudaka-zapechennoe-v-folge-v-duxovke',{pikeperch:115,egg:12,cream:25,garlic:2},{barley:78,apple:160,butter:2,bread:25}],
+['a33527','Стейки форели в фольге','С рыбой',40,'33527-steiki-iz-foreli-v-folge',{trout:115,mustard:8,honey:5,oil:7,lemon:8},{barley:65,apple:145,butter:2}],
+['a28835','Куриная грудка с картошкой и сыром','С птицей',50,'28835-kurinaya-grudka-v-duxovke-s-kartoshkoi-i-syrom',{chicken:75,potato:225,pepper:60,onion:20,cheese:23,soy:8,oil:7},{apple:120,bread:20}],
+['a39017','Курица с цветной капустой','С птицей',50,'39017-kurica-s-cvetnoi-kapustoi-v-duxovke',{chicken:60,cauli:160,egg:20,cream10:50,cheese:30,garlic:2,oil:5},{bread:38,apple:160}],
+['a43686','Минтай в сливках','С рыбой',50,'43686-mintai-v-slivkax-v-duxovke',{pollock:115,cream10:48,cheese:24,oil:6,flour:8},{barley:50,apple:140,bread:14}],
+['a29477','Минтай с рисом','С рыбой',50,'29477-mintai-s-risom',{pollock:105,rice:68,onion:40,oil:7,cheese:15},{apple:150,yogurt:45}],
+['a24286','Курица в сметанном соусе с грибами','С птицей',60,'24286-kurica-v-smetannom-souse-v-duxovke',{chicken:80,mushroom:80,onion:50,cream:40,oil:7},{barley:70,apple:140,butter:2}],
+['a7991','Куриные ножки запечённые','С птицей',60,'7991-zapechennje-kurinje-nozhki',{thigh:105,butter:6,lemon:10,garlic:2},{potato:290,apple:140,butter:4}],
+['a65121','Индейка кусочками с сыром','С птицей',60,'65121-indeika-kusochkami-v-duxovke-sochnaya-i-myagkaya',{turkey:88,cheese:20,tomato:120,herbs:3},{potato:290,apple:140,butter:6}],
+['a29112','Куриные грудки в фольге','С птицей',60,'29112-kurinaya-grudka-zapechennaya-v-folge-v-duxovke',{chicken:100,garlic:4,oil:8},{potato:310,apple:150,butter:8}],
+['a31427','Минтай в сметане','С рыбой',60,'31427-mintai-v-smetane-v-duxovke',{pollock:115,cream:32,cheese:18,onion:40,mustard:4,lemon:8,oil:5},{barley:65,apple:145,butter:2}],
+['a44358','Рис с курицей в духовке','С птицей',60,'44358-ris-s-kuricei-v-duxovke',{chicken:80,rice:68,carrot:45,paste:10,garlic:2,oil:7},{apple:150,yogurt:45}],
+['a34206','Скумбрия с лимоном','С рыбой',60,'34206-skumbriya-s-limonom-v-duxovke',{mackerel:105,lemon:12,garlic:2,cream:10},{barley:72,apple:155,butter:4,bread:12}],
+['a64008','Скумбрия в соевом соусе','С рыбой',60,'64008-skumbriya-v-soevom-souse-v-duxovke-zapechennaya',{mackerel:105,onion:55,soy:18,lemon:10,oil:6},{barley:65,apple:145,butter:2}],
+['a16156','Тефтели из индейки в духовке','С птицей',60,'16156-tefteli-iz-indeiki-v-duxovke',{turkey:105,onion:30,carrot:35,pepper:45,tomato:70,paste:12,rice:28,garlic:3,oil:6},{bread:55,apple:140}],
+['a39992','Гречка с курицей','С птицей',75,'39992-grechka-s-kuricei-v-duxovke',{thigh:85,buckwheat:66,carrot:40,paste:12,garlic:2,oil:7},{apple:140,yogurt:45}],
+['a11761','Куриные голени в сливочно-горчичном соусе','С птицей',60,'11761-kurinye-goleni-v-slivochno-gorchichnom-souse',{thigh:105,cream10:55,mustard:6,garlic:3,oil:6},{potato:270,apple:140,butter:4}],
+['a61264','Картошка с курицей и помидорами','С птицей',70,'61264-kartoshka-s-kuricei-i-pomidorami-v-duxovke',{thigh:85,potato:230,cream:25,tomato:120,garlic:3,oil:7},{bread:30,apple:110}],
+['a38128','Куриное филе с грибами и сыром','С птицей',70,'38128-kurinoe-file-s-gribami-i-syrom',{chicken:80,mushroom:55,cheese:25,onion:40,cream:30,oil:6,garlic:2},{potato:240,apple:125,butter:4}],
+['a28834','Куриная грудка с сыром','С птицей',60,'28834-kurinaya-grudka-s-syrom-v-duxovke',{chicken:85,onion:40,cheese:30,cream:20},{potato:290,apple:150}],
+['a4160','Курица в сливочном соусе','С птицей',70,'4160-kurica-v-slivochnom-souse-v-duxovke',{chicken:85,cream10:55,garlic:3,oil:8,flour:8},{potato:270,apple:140,butter:4}],
+['a23238','Форель с картошкой','С рыбой',80,'23238-forel-s-kartoshkoi-v-duxovke-zapechennaya',{trout:105,potato:200,garlic:2,oil:8,mustard:6,butter:5,lemon:8,egg:10},{apple:110,bread:20}],
+['a68750','Запеканка с курицей и грибами','С птицей',80,'68750-zapekanka-s-kuricei-i-gribami-v-duxovke',{potato:225,chicken:45,mushroom:55,onion:30,milk:35,egg:12,cream:25,cheese:15,oil:5},{apple:115,bread:25}],
+['a16116','Курица с сыром и сметаной','С птицей',40,'16116-kurica-s-syrom-v-duxovke',{chicken:92,cream:15,cheese:30,garlic:2},{potato:275,apple:150,butter:5}],
+['a28902','Куриная отбивная с моцареллой','С птицей',60,'28902-kurinye-otbivnye-s-syrom-i-pomidorami',{chicken:88,mozzarella:35,tomato:90,herbs:8,oil:6},{potato:245,apple:120}],
+['a24561','Курица в медово-горчичном соусе','С птицей',60,'24561-kurica-v-medovo-gorchichnom-souse',{chicken:85,honey:8,mustard:8,oil:7},{potato:280,apple:140,butter:8}],
+].map(toRecipe);
+recipes.push(...airfryerInternet);
+const internetAirfryerIds=new Set(airfryerInternet.map(r=>r.id));
+// Блюда, которые готовятся и в аэрогриле, и обычным способом (духовка/сковорода):
+// духовочные рецепты из интернета и 41 подходящее блюдо основной коллекции.
+const mirroredAirfryerIds=new Set(['m69215','m43651','m16559','potato','pasta','m52324','m39174','m11831','roast','m7273','m4164','m94566','m12417','m44529','m29617','m37963','m43513','m42605','m40529','m16966','m83724','m17258','m13148','m11970','m16072','m39318','m25647','m38469','m14206','m26107','m17482','m66388','m32116','m70784','m14033','m88011','m16511','m67143','m16849','m1224','m76936']);
+const airfryerDualIds=new Set(['a29384','a17992','a17866','a18390','a33527','a28835','a39017','a43686','a29477','a24286','a7991','a65121','a29112','a31427','a44358','a34206','a64008','a16156','a39992','a11761','a61264','a38128','a28834','a4160','a23238','a68750','a16116','a28902','a24561',...mirroredAirfryerIds]);
+for(const r of recipes) if(airfryerDualIds.has(r.id)) r.both=true;
+const airfryerRecipes=[...recipes.filter(r=>internetAirfryerIds.has(r.id)),...recipes.filter(r=>mirroredAirfryerIds.has(r.id))];
