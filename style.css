@@ -16,3 +16,5 @@ dialog{padding:0;background:var(--sheet);color:var(--ink);border:1px solid var(-
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
 
 @media(max-width:525px){.top nav{width:100%;justify-content:space-between}.top nav button{flex:1;justify-content:center;white-space:nowrap}}
+
+.refresh-actions{display:flex;justify-content:center;margin:24px 0}
