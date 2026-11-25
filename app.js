@@ -72,3 +72,39 @@ if(sos&&sosOpen){sosOpen.addEventListener('click',()=>sos.showModal());sos.addEv
 
 // Last resort if a local asset is damaged.
 document.addEventListener('error',e=>{if(e.target instanceof HTMLImageElement && (e.target.closest('.photo')||e.target.closest('.modalpic')) && !e.target.dataset.fallback){e.target.dataset.fallback='true';e.target.src='assets/ink.webp';e.target.alt='Кулинарная иллюстрация'}},true);
+
+/* «Я не знаю что приготовить»: колесо 60%, Telegram 30%, магазины по 5%. */
+const fortuneModal=$('#fortuneModal'),fortuneWheel=$('#fortuneWheel'),fortuneResult=$('#fortuneResult');
+let fortuneTimer;
+$('#surpriseOpen').addEventListener('click',()=>{
+  const url=fortune.chooseAction();
+  if(url){window.location.assign(url);return}
+  const {entries,winner,rotation}=fortune.spin(generalRecipes);
+  clearTimeout(fortuneTimer);
+  fortuneWheel.style.transition='none';
+  fortuneWheel.style.transform='rotate(0deg)';
+  fortuneWheel.replaceChildren(...entries.map((r,i)=>{
+    const label=document.createElement('span');
+    label.textContent=String(i+1);
+    label.style.transform=`translate(-50%,-50%) rotate(${(i+.5)*40}deg) translateY(calc(var(--wheel-size) * -.37)) rotate(-${(i+.5)*40}deg)`;
+    return label;
+  }));
+  fortuneResult.textContent='Колесо вращается…';
+  fortuneModal.showModal();
+  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Фиксируем начальное состояние перед запуском CSS-перехода.
+  void fortuneWheel.offsetWidth;
+  fortuneWheel.style.transition=reduced?'none':'transform 4.8s cubic-bezier(.12,.7,.12,1)';
+  fortuneWheel.style.transform=`rotate(${rotation}deg)`;
+  fortuneTimer=setTimeout(()=>{
+    if(!fortuneModal.open)return;
+    const recipe=entries[winner],button=document.createElement('button');
+    button.className='btn dark';
+    button.textContent=`${winner+1}. ${recipe.name} — открыть рецепт`;
+    button.onclick=()=>{fortuneModal.close();details(recipe.id)};
+    fortuneResult.replaceChildren(button);
+  },reduced?0:4900);
+});
+$('#fortuneClose').onclick=()=>fortuneModal.close();
+fortuneModal.addEventListener('click',e=>{if(e.target===fortuneModal)fortuneModal.close()});
+fortuneModal.addEventListener('close',()=>clearTimeout(fortuneTimer));
