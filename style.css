@@ -57,3 +57,18 @@ html.sunset .art{filter:sepia(.35) saturate(.9) brightness(.82) hue-rotate(-18de
 html.sunset .photo img[data-fallback],html.sunset .modalpic img[data-fallback]{mix-blend-mode:normal;background:#3e3039}
 html.sunset dialog::backdrop{background:#150d12a6}
 html.sunset ::selection{background:#cf875755}
+
+/* Случайный ужин: кнопка в потоке страницы, колесо с секретными нумерованными секторами. */
+.surprise-actions{display:flex;align-items:center;flex-direction:column;gap:7px;margin:0 0 28px;text-align:center}
+.surprise-actions small{color:var(--muted);font-size:12px;max-width:90%}
+.fortune-body{padding:24px;position:relative;text-align:center}
+.fortune-body h2{font:30px/1.15 var(--serif);margin:12px 20px}
+.fortune-body p{color:var(--muted)}
+.fortune-close{position:absolute;right:12px;top:10px;background:transparent;border:0;color:var(--ink);font-size:22px;padding:5px 10px}
+.wheel-frame{--wheel-size:min(300px,68vw);position:relative;width:var(--wheel-size);margin:26px auto}
+.wheel-pointer{position:absolute;top:-23px;left:50%;transform:translateX(-50%);z-index:1;font-size:30px;color:var(--ink);text-shadow:0 1px 2px var(--sheet)}
+.fortune-wheel{position:relative;width:100%;aspect-ratio:1;border:4px solid var(--line);border-radius:50%;box-sizing:border-box;background:conic-gradient(#384329 0deg 40deg,#896245 40deg 80deg,#606948 80deg 120deg,#a16548 120deg 160deg,#384329 160deg 200deg,#896245 200deg 240deg,#606948 240deg 280deg,#a16548 280deg 320deg,#6b6445 320deg 360deg)}
+.fortune-wheel span{position:absolute;left:50%;top:50%;font:bold 22px var(--serif);color:#fff8e9}
+#fortuneResult{min-height:58px;display:grid;place-items:center;color:var(--muted)}
+#fortuneResult button{white-space:normal;max-width:100%}
+@media(max-width:525px){.fortune-body{padding:18px 14px}.fortune-body h2{font-size:26px}}
